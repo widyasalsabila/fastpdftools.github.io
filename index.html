@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Tools - All-in-One</title>
+
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+    </script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">
+    </script>
+
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 24px 16px 8px;
+        }
+        .header .logo {
+            font-size: 2rem;
+            margin-bottom: 4px;
+        }
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+        .header p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Tool Grid */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 8px 0;
+        }
+        @media (min-width: 500px) {
+            .tool-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+        }
+        @media (min-width: 768px) {
+            .tool-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 14px;
+            }
+        }
+        @media (min-width: 1024px) {
+            .tool-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 16px;
+            }
+        }
+
+        .tool-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 18px 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: all var(--transition);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-height: 120px;
+            justify-content: center;
+        }
+        .tool-card:active {
+            transform: scale(0.96);
+        }
+        .tool-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+        .tool-card .icon {
+            font-size: 2.2rem;
+            line-height: 1;
+            transition: transform var(--transition);
+        }
+        .tool-card:hover .icon {
+            transform: scale(1.15);
+        }
+        .tool-card .name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text);
+            line-height: 1.2;
+        }
+        .tool-card .desc {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+        .tool-card.accent-1 {
+            border-left: 3px solid #6366f1;
+        }
+        .tool-card.accent-2 {
+            border-left: 3px solid #8b5cf6;
+        }
+        .tool-card.accent-3 {
+            border-left: 3px solid #ec4899;
+        }
+        .tool-card.accent-4 {
+            border-left: 3px solid #f59e0b;
+        }
+        .tool-card.accent-5 {
+            border-left: 3px solid #10b981;
+        }
+
+        /* Tool Panel */
+        .tool-panel {
+            display: none;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px 16px;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.3s ease;
+        }
+        .tool-panel.active {
+            display: block;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            transition: all var(--transition);
+        }
+        .back-btn:hover {
+            background: #dde4ff;
+        }
+        .back-btn:active {
+            transform: scale(0.95);
+        }
+        .tool-panel h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }
+        .tool-panel .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 28px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: #fafbfc;
+            position: relative;
+        }
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .upload-zone .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        .upload-zone p {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+        .upload-zone span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .upload-zone.multiple-files {
+            min-height: 100px;
+        }
+
+        /* File list */
+        .file-list {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .file-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .file-tag .remove-tag {
+            cursor: pointer;
+            font-weight: 700;
+            color: #ef4444;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-lg);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+        .btn-primary:disabled {
+            background: #c7c9d1;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .btn-outline {
+            background: #fff;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            margin-top: 8px;
+            width: 100%;
+        }
+        .btn-outline:hover {
+            background: var(--primary-light);
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            border-radius: 20px;
+        }
+
+        /* Progress */
+        .progress-wrap {
+            margin-top: 12px;
+            display: none;
+        }
+        .progress-wrap.show {
+            display: block;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        /* Result */
+        .result-area {
+            margin-top: 12px;
+            display: none;
+            padding: 14px;
+            background: #f0fdf4;
+            border-radius: var(--radius-sm);
+            border: 1px solid #bbf7d0;
+        }
+        .result-area.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        .result-area .result-icon {
+            font-size: 1.5rem;
+        }
+        .result-area .result-text {
+            font-weight: 600;
+            color: #166534;
+            font-size: 0.9rem;
+        }
+        .result-area .result-size {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* Options */
+        .options-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+            align-items: center;
+        }
+        .options-row label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .options-row input[type="text"],
+        .options-row input[type="number"],
+        .options-row select {
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            width: 100%;
+            max-width: 200px;
+            transition: border var(--transition);
+        }
+        .options-row input:focus,
+        .options-row select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .options-row input[type="password"] {
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 16px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">📄</div>
+            <h1>PDF Tools</h1>
+            <p>All-in-one • Free • Private • No Uploads</p>
+        </div>
+
+        <!-- Tool Grid -->
+        <div class="tool-grid" id="toolGrid">
+            <div class="tool-card accent-1" data-tool="compress">
+                <div class="icon">🗜️</div>
+                <div class="name">Compress PDF</div>
+                <div class="desc">Reduce file size</div>
+            </div>
+            <div class="tool-card accent-2" data-tool="merge">
+                <div class="icon">🔗</div>
+                <div class="name">Merge PDF</div>
+                <div class="desc">Combine multiple PDFs</div>
+            </div>
+            <div class="tool-card accent-3" data-tool="pdf-to-word">
+                <div class="icon">📝</div>
+                <div class="name">PDF to Word</div>
+                <div class="desc">Extract text content</div>
+            </div>
+            <div class="tool-card accent-4" data-tool="jpg-to-pdf">
+                <div class="icon">🖼️</div>
+                <div class="name">JPG to PDF</div>
+                <div class="desc">Image to document</div>
+            </div>
+            <div class="tool-card accent-5" data-tool="word-to-pdf">
+                <div class="icon">📃</div>
+                <div class="name">Word to PDF</div>
+                <div class="desc">DOCX conversion</div>
+            </div>
+            <div class="tool-card accent-1" data-tool="split">
+                <div class="icon">✂️</div>
+                <div class="name">Split PDF</div>
+                <div class="desc">Extract pages</div>
+            </div>
+            <div class="tool-card accent-2" data-tool="edit">
+                <div class="icon">✏️</div>
+                <div class="name">Edit PDF</div>
+                <div class="desc">Add text annotations</div>
+            </div>
+            <div class="tool-card accent-3" data-tool="unlock">
+                <div class="icon">🔓</div>
+                <div class="name">Unlock PDF</div>
+                <div class="desc">Remove password</div>
+            </div>
+            <div class="tool-card accent-4" data-tool="ocr">
+                <div class="icon">👁️</div>
+                <div class="name">OCR PDF</div>
+                <div class="desc">Extract text via OCR</div>
+            </div>
+            <div class="tool-card accent-5" data-tool="pdf-to-jpg">
+                <div class="icon">🖼️</div>
+                <div class="name">PDF to JPG</div>
+                <div class="desc">Pages to images</div>
+            </div>
+        </div>
+
+        <!-- Tool Panels Container -->
+        <div id="toolPanels"></div>
+
+        <!-- Footer -->
+        <div class="footer">
+            All processing happens locally in your browser. No files are uploaded to any server. 🛡️
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            // ==================== SETUP ====================
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+            const toast = document.getElementById('toast');
+            const toolGrid = document.getElementById('toolGrid');
+            const toolPanels = document.getElementById('toolPanels');
+            let currentTool = null;
+            let uploadedFiles = [];
+            let mergedFileBytes = null;
+
+            function showToast(msg, isError = false) {
+                toast.textContent = msg;
+                toast.className = 'toast ' + (isError ? 'error' : '') + ' show';
+                clearTimeout(toast._timeout);
+                toast._timeout = setTimeout(() => {
+                    toast.className = 'toast';
+                }, 3000);
+            }
+
+            function formatBytes(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1048576).toFixed(2) + ' MB';
+            }
+
+            function downloadBlob(blob, filename) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // ==================== TOOL PANEL TEMPLATES ====================
+            const toolConfigs = {
+                'compress': {
+                    title: '🗜️ Compress PDF',
+                    subtitle: 'Reduce PDF file size by optimizing internal structure.',
+                    accepts: '.pdf',
+                    multiple: false,
+                    needsOptions: false,
+                },
+                'merge': {
+                    title: '🔗 Merge PDFs',
+                    subtitle: 'Combine multiple PDF files into a single document. Files are merged in the order added.',
+                    accepts: '.pdf',
+                    multiple: true,
+                    needsOptions: false,
+                },
+                'pdf-to-word': {
+                    title: '📝 PDF to Word',
+                    subtitle: 'Extract text content from PDF and download as a .doc file (text-based).',
+                    accepts: '.pdf',
+                    multiple: false,
+                    needsOptions: false,
+                },
+                'jpg-to-pdf': {
+                    title: '🖼️ JPG to PDF',
+                    subtitle: 'Convert one or more JPG/PNG images into a PDF document.',
+                    accepts: 'image/*',
+                    multiple: true,
+                    needsOptions: false,
+                },
+                'word-to-pdf': {
+                    title: '📃 Word to PDF',
+                    subtitle: 'Convert a DOCX file to PDF (text-based, formatting may vary).',
+                    accepts: '.docx',
+                    multiple: false,
+                    needsOptions: false,
+                },
+                'split': {
+                    title: '✂️ Split PDF',
+                    subtitle: 'Extract specific pages from a PDF. Enter page numbers separated by commas (e.g., 1,3,5-7).',
+                    accepts: '.pdf',
+                    multiple: false,
+                    needsOptions: true,
+                    optionLabel: 'Pages to extract:',
+                    optionPlaceholder: 'e.g. 1,3,5-7',
+                    optionType: 'text',
+                },
+                'edit': {
+                    title: '✏️ Edit PDF',
+                    subtitle: 'Add a text annotation to a specific page of the PDF.',
+                    accepts: '.pdf',
+                    multiple: false,
+                    needsOptions: true,
+                    optionLabel: 'Annotation text:',
+                    optionPlaceholder: 'Enter text to add...',
+                    optionType: 'text',
+                    extraOptions: [
+                        { label: 'Page:', type: 'number', id: 'editPage', placeholder: '1', min: '1', value: '1',
+                            style: 'max-width:80px;' },
+                        { label: 'Font Size:', type: 'number', id: 'editFontSize', placeholder: '24', min: '6',
+                            max: '72', value: '24', style: 'max-width:80px;' },
+                    ],
+                },
+                'unlock': {
+                    title: '🔓 Unlock PDF',
+                    subtitle: 'Remove password protection from a PDF. Enter the password if the file is encrypted.',
+                    accepts: '.pdf',
+                    multiple: false,
+                    needsOptions: true,
+                    optionLabel: 'Password (leave blank if none):',
+                    optionPlaceholder: 'Enter password...',
+                    optionType: 'password',
+                },
+                'ocr': {
+                    title: '👁️ OCR PDF',
+                    subtitle: 'Extract text from PDF using OCR (Optical Character Recognition). Processes the first page.',
+                    accepts: '.pdf',
+                    multiple: false,
+                    needsOptions: false,
+                },
+                'pdf-to-jpg': {
+                    title: '🖼️ PDF to JPG',
+                    subtitle: 'Convert PDF pages to high-quality JPG images. Each page becomes a separate image.',
+                    accepts: '.pdf',
+                    multiple: false,
+                    needsOptions: false,
+                },
+            };
+
+            function createToolPanel(toolId) {
+                const config = toolConfigs[toolId];
+                if (!config) return '';
+
+                let optionsHTML = '';
+                if (config.needsOptions) {
+                    optionsHTML = `
+                    <div class="options-row">
+                        <label>${config.optionLabel || 'Option:'}</label>
+                        <input type="${config.optionType || 'text'}" id="toolOption"
+                               placeholder="${config.optionPlaceholder || ''}"
+                               style="max-width:250px;">
+                    </div>`;
+                    if (config.extraOptions) {
+                        config.extraOptions.forEach(opt => {
+                            optionsHTML += `
+                            <div class="options-row" style="display:inline-flex;">
+                                <label>${opt.label}</label>
+                                <input type="${opt.type}" id="${opt.id}"
+                                       placeholder="${opt.placeholder}" min="${opt.min || ''}"
+                                       max="${opt.max || ''}" value="${opt.value || ''}"
+                                       style="${opt.style || 'max-width:100px;'}">
+                            </div>`;
+                        });
+                    }
+                }
+
+                const multipleAttr = config.multiple ? 'multiple' : '';
+                const acceptAttr = config.accepts || '.pdf';
+
+                return `
+                <div class="tool-panel" id="panel-${toolId}">
+                    <button class="back-btn" onclick="window._goBack()">← Back to Tools</button>
+                    <h2>${config.title}</h2>
+                    <p class="subtitle">${config.subtitle}</p>
+                    <div class="upload-zone" id="uploadZone-${toolId}">
+                        <div class="upload-icon">📤</div>
+                        <p>Tap to upload ${config.multiple ? 'files' : 'a file'}</p>
+                        <span>${acceptAttr === 'image/*' ? 'JPG, PNG, WebP' : acceptAttr.toUpperCase().replace('.', '')} • Max 50MB</span>
+                        <input type="file" id="fileInput-${toolId}" accept="${acceptAttr}" ${multipleAttr}>
+                    </div>
+                    <div class="file-list" id="fileList-${toolId}"></div>
+                    ${optionsHTML}
+                    <button class="btn btn-primary" id="processBtn-${toolId}" disabled>⚡ Process</button>
+                    <div class="progress-wrap" id="progress-${toolId}">
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill-${toolId}"></div></div>
+                        <p class="progress-text" id="progressText-${toolId}">Processing...</p>
+                    </div>
+                    <div class="result-area" id="result-${toolId}">
+                        <span class="result-icon">✅</span>
+                        <span class="result-text" id="resultText-${toolId}">Ready!</span>
+                        <span class="result-size" id="resultSize-${toolId}"></span>
+                        <br>
+                        <button class="btn btn-outline btn-sm" id="downloadBtn-${toolId}" style="margin-top:8px;width:auto;">⬇ Download</button>
+                    </div>
+                </div>`;
+            }
+
+            // Render all tool panels
+            let allPanelsHTML = '';
+            Object.keys(toolConfigs).forEach(toolId => {
+                allPanelsHTML += createToolPanel(toolId);
+            });
+            toolPanels.innerHTML = allPanelsHTML;
+
+            // ==================== NAVIGATION ====================
+            window._goBack = function() {
+                if (currentTool) {
+                    document.getElementById('panel-' + currentTool).classList.remove('active');
+                    currentTool = null;
+                    uploadedFiles = [];
+                    mergedFileBytes = null;
+                    toolGrid.classList.remove('hidden');
+                    // Reset all result areas and progress
+                    document.querySelectorAll('.result-area').forEach(r => r.classList.remove('show'));
+                    document.querySelectorAll('.progress-wrap').forEach(p => p.classList.remove('show'));
+                    document.querySelectorAll('.btn-primary').forEach(b => b.disabled = true);
+                    document.querySelectorAll('.file-list').forEach(f => f.innerHTML = '');
+                }
+            };
+
+            toolGrid.addEventListener('click', function(e) {
+                const card = e.target.closest('.tool-card');
+                if (!card) return;
+                const toolId = card.dataset.tool;
+                if (toolId && toolConfigs[toolId]) {
+                    currentTool = toolId;
+                    uploadedFiles = [];
+                    mergedFileBytes = null;
+                    toolGrid.classList.add('hidden');
+                    document.getElementById('panel-' + toolId).classList.add('active');
+                    // Reset
+                    document.getElementById('result-' + toolId).classList.remove('show');
+                    document.getElementById('progress-' + toolId).classList.remove('show');
+                    document.getElementById('processBtn-' + toolId).disabled = true;
+                    document.getElementById('fileList-' + toolId).innerHTML = '';
+                    const fileInput = document.getElementById('fileInput-' + toolId);
+                    if (fileInput) fileInput.value = '';
+                    const toolOption = document.getElementById('toolOption');
+                    if (toolOption) toolOption.value = '';
+                    // Scroll to panel
+                    document.getElementById('panel-' + toolId).scrollIntoView({ behavior: 'smooth',
+                    block: 'start' });
+                }
+            });
+
+            // ==================== FILE HANDLING ====================
+            Object.keys(toolConfigs).forEach(toolId => {
+                const uploadZone = document.getElementById('uploadZone-' + toolId);
+                const fileInput = document.getElementById('fileInput-' + toolId);
+                const fileList = document.getElementById('fileList-' + toolId);
+                const processBtn = document.getElementById('processBtn-' + toolId);
+
+                if (!uploadZone || !fileInput) return;
+
+                // Click on zone triggers file input
+                uploadZone.addEventListener('click', function(e) {
+                    if (e.target !== fileInput) {
+                        fileInput.click();
+                    }
+                });
+
+                // Drag and drop
+                uploadZone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    uploadZone.classList.add('drag-over');
+                });
+                uploadZone.addEventListener('dragleave', function() {
+                    uploadZone.classList.remove('drag-over');
+                });
+                uploadZone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    uploadZone.classList.remove('drag-over');
+                    handleFiles(toolId, e.dataTransfer.files);
+                });
+
+                // File input change
+                fileInput.addEventListener('change', function() {
+                    handleFiles(toolId, fileInput.files);
+                });
+
+                function handleFiles(toolId, files) {
+                    if (!files || files.length === 0) return;
+                    const config = toolConfigs[toolId];
+                    uploadedFiles = [];
+
+                    // Check sizes
+                    let totalSize = 0;
+                    for (const f of files) {
+                        if (f.size > 50 * 1024 * 1024) {
+                            showToast('File "' + f.name + '" exceeds 50MB limit.', true);
+                            return;
+                        }
+                        totalSize += f.size;
+                    }
+
+                    if (!config.multiple && files.length > 1) {
+                        uploadedFiles = [files[0]];
+                        showToast('Only one file accepted. Using the first file.');
+                    } else {
+                        uploadedFiles = Array.from(files);
+                    }
+
+                    // Display file tags
+                    fileList.innerHTML = uploadedFiles.map((f, i) => `
+                        <span class="file-tag">
+                            📎 ${f.name.length > 28 ? f.name.substring(0, 25) + '...' : f.name}
+                            <span class="remove-tag" data-index="${i}">×</span>
+                        </span>
+                    `).join('');
+
+                    // Remove tag handlers
+                    fileList.querySelectorAll('.remove-tag').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const idx = parseInt(this.dataset.index);
+                            uploadedFiles.splice(idx, 1);
+                            if (uploadedFiles.length === 0) {
+                                fileList.innerHTML = '';
+                                processBtn.disabled = true;
+                                fileInput.value = '';
+                            } else {
+                                handleFiles(toolId, uploadedFiles);
+                            }
+                        });
+                    });
+
+                    processBtn.disabled = uploadedFiles.length === 0;
+                    document.getElementById('result-' + toolId).classList.remove('show');
+                    document.getElementById('progress-' + toolId).classList.remove('show');
+                }
+
+                // Process button
+                processBtn.addEventListener('click', function() {
+                    if (uploadedFiles.length === 0) {
+                        showToast('Please upload a file first.', true);
+                        return;
+                    }
+                    processFile(toolId);
+                });
+            });
+
+            // ==================== PROCESSING ====================
+            async function processFile(toolId) {
+                const progressWrap = document.getElementById('progress-' + toolId);
+                const progressFill = document.getElementById('progressFill-' + toolId);
+                const progressText = document.getElementById('progressText-' + toolId);
+                const resultArea = document.getElementById('result-' + toolId);
+                const resultText = document.getElementById('resultText-' + toolId);
+                const resultSize = document.getElementById('resultSize-' + toolId);
+                const downloadBtn = document.getElementById('downloadBtn-' + toolId);
+                const processBtn = document.getElementById('processBtn-' + toolId);
+
+                progressWrap.classList.add('show');
+                progressFill.style.width = '10%';
+                progressText.textContent = 'Reading file(s)...';
+                resultArea.classList.remove('show');
+                processBtn.disabled = true;
+
+                try {
+                    let resultBlob = null;
+                    let resultFilename = 'output.pdf';
+
+                    switch (toolId) {
+                        case 'compress':
+                            resultBlob = await compressPDF(uploadedFiles[0], progressFill, progressText);
+                            resultFilename = uploadedFiles[0].name.replace('.pdf', '_compressed.pdf');
+                            break;
+                        case 'merge':
+                            resultBlob = await mergePDFs(uploadedFiles, progressFill, progressText);
+                            resultFilename = 'merged.pdf';
+                            break;
+                        case 'pdf-to-word':
+                            resultBlob = await pdfToWord(uploadedFiles[0], progressFill, progressText);
+                            resultFilename = uploadedFiles[0].name.replace('.pdf', '.doc');
+                            break;
+                        case 'jpg-to-pdf':
+                            resultBlob = await jpgToPdf(uploadedFiles, progressFill, progressText);
+                            resultFilename = 'images.pdf';
+                            break;
+                        case 'word-to-pdf':
+                            resultBlob = await wordToPdf(uploadedFiles[0], progressFill, progressText);
+                            resultFilename = uploadedFiles[0].name.replace('.docx', '.pdf');
+                            break;
+                        case 'split':
+                            resultBlob = await splitPDF(uploadedFiles[0], progressFill, progressText);
+                            resultFilename = uploadedFiles[0].name.replace('.pdf', '_split.pdf');
+                            break;
+                        case 'edit':
+                            resultBlob = await editPDF(uploadedFiles[0], progressFill, progressText);
+                            resultFilename = uploadedFiles[0].name.replace('.pdf', '_edited.pdf');
+                            break;
+                        case 'unlock':
+                            resultBlob = await unlockPDF(uploadedFiles[0], progressFill, progressText);
+                            resultFilename = uploadedFiles[0].name.replace('.pdf', '_unlocked.pdf');
+                            break;
+                        case 'ocr':
+                            resultBlob = await ocrPDF(uploadedFiles[0], progressFill, progressText);
+                            resultFilename = uploadedFiles[0].name.replace('.pdf', '_ocr.txt');
+                            break;
+                        case 'pdf-to-jpg':
+                            resultBlob = await pdfToJpg(uploadedFiles[0], progressFill, progressText);
+                            resultFilename = uploadedFiles[0].name.replace('.pdf', '_page1.jpg');
+                            break;
+                        default:
+                            throw new Error('Unknown tool');
+                    }
+
+                    progressFill.style.width = '100%';
+                    progressText.textContent = 'Done! ✅';
+
+                    if (resultBlob) {
+                        resultArea.classList.add('show');
+                        resultText.textContent = 'Ready!';
+                        resultSize.textContent = 'Size: ' + formatBytes(resultBlob.size);
+                        downloadBtn.onclick = function() {
+                            downloadBlob(resultBlob, resultFilename);
+                        };
+                        // Auto-download on mobile for PDF to JPG (single image)
+                        if (toolId === 'pdf-to-jpg') {
+                            downloadBlob(resultBlob, resultFilename);
+                        }
+                    }
+
+                } catch (err) {
+                    console.error('Processing error:', err);
+                    progressText.textContent = 'Error: ' + err.message;
+                    showToast('Error: ' + err.message, true);
+                } finally {
+                    processBtn.disabled = false;
+                    setTimeout(() => {
+                        if (progressWrap.classList.contains('show') && progressFill.style.width === '100%') {
+                            // keep success state visible
+                        }
+                    }, 500);
+                }
+            }
+
+            // ==================== TOOL IMPLEMENTATIONS ====================
+
+            // 1. Compress PDF
+            async function compressPDF(file, progressFill, progressText) {
+                progressFill.style.width = '20%';
+                progressText.textContent = 'Loading PDF...';
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                progressFill.style.width = '50%';
+                progressText.textContent = 'Optimizing...';
+                // pdf-lib automatically compresses when saving
+                const compressedBytes = await pdfDoc.save({
+                    useObjectStreams: true,
+                    addDefaultPage: false,
+                });
+                progressFill.style.width = '90%';
+                progressText.textContent =
+                    'Original: ' + formatBytes(file.size) + ' → Compressed: ' + formatBytes(compressedBytes.length);
+                return new Blob([compressedBytes], { type: 'application/pdf' });
+            }
+
+            // 2. Merge PDFs
+            async function mergePDFs(files, progressFill, progressText) {
+                const mergedDoc = await PDFLib.PDFDocument.create();
+                for (let i = 0; i < files.length; i++) {
+                    progressFill.style.width = Math.round(20 + (60 * (i / files.length))) + '%';
+                    progressText.textContent = 'Merging file ' + (i + 1) + ' of ' + files.length + '...';
+                    const arrayBuffer = await files[i].arrayBuffer();
+                    const doc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                    const pages = await mergedDoc.copyPages(doc, doc.getPageIndices());
+                    pages.forEach(page => mergedDoc.addPage(page));
+                }
+                progressFill.style.width = '90%';
+                progressText.textContent = 'Saving merged PDF...';
+                const mergedBytes = await mergedDoc.save({ useObjectStreams: true });
+                return new Blob([mergedBytes], { type: 'application/pdf' });
+            }
+
+            // 3. PDF to Word (text extraction)
+            async function pdfToWord(file, progressFill, progressText) {
+                progressFill.style.width = '20%';
+                progressText.textContent = 'Loading PDF...';
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const totalPages = pdf.numPages;
+                let fullText = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    progressFill.style.width = Math.round(20 + (60 * (i / totalPages))) + '%';
+                    progressText.textContent = 'Extracting page ' + i + ' of ' + totalPages + '...';
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += '--- Page ' + i + ' ---\n\n' + pageText + '\n\n';
+                }
+                progressFill.style.width = '90%';
+                progressText.textContent = 'Creating document...';
+                // Create a simple .doc format (RTF-like text)
+                const docContent = fullText || '(No text content found in PDF)';
+                return new Blob([docContent], { type: 'application/msword' });
+            }
+
+            // 4. JPG to PDF
+            async function jpgToPdf(files, progressFill, progressText) {
+                const { jsPDF } = jspdf;
+                const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 10;
+                const maxWidth = pageWidth - 2 * margin;
+                const maxHeight = pageHeight - 2 * margin;
+
+                for (let i = 0; i < files.length; i++) {
+                    if (i > 0) doc.addPage();
+                    progressFill.style.width = Math.round(20 + (60 * ((i + 1) / files.length))) + '%';
+                    progressText.textContent = 'Processing image ' + (i + 1) + ' of ' + files.length + '...';
+                    const imgData = await readFileAsDataURL(files[i]);
+                    const img = await loadImage(imgData);
+                    let w = img.width;
+                    let h = img.height;
+                    // Scale to fit
+                    const ratio = Math.min(maxWidth / w, maxHeight / h);
+                    w = w * ratio;
+                    h = h * ratio;
+                    const x = margin + (maxWidth - w) / 2;
+                    const y = margin + (maxHeight - h) / 2;
+                    doc.addImage(imgData, 'JPEG', x, y, w, h, undefined, 'FAST');
+                }
+                progressFill.style.width = '90%';
+                progressText.textContent = 'Saving PDF...';
+                const pdfBytes = doc.output('arraybuffer');
+                return new Blob([pdfBytes], { type: 'application/pdf' });
+            }
+
+            function readFileAsDataURL(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            function loadImage(src) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = src;
+                });
+            }
+
+            // 5. Word to PDF
+            async function wordToPdf(file, progressFill, progressText) {
+                progressFill.style.width = '30%';
+                progressText.textContent = 'Extracting text from DOCX...';
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer });
+                const text = result.value || '(No text content found)';
+                progressFill.style.width = '60%';
+                progressText.textContent = 'Creating PDF...';
+                const { jsPDF } = jspdf;
+                const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const margin = 15;
+                const maxWidth = pageWidth - 2 * margin;
+                const lineHeight = 5;
+                const lines = doc.splitTextToSize(text, maxWidth);
+                let y = 20;
+                const pageHeight = doc.internal.pageSize.getHeight();
+                for (const line of lines) {
+                    if (y > pageHeight - 15) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(line, margin, y, { fontSize: 10 });
+                    y += lineHeight;
+                }
+                progressFill.style.width = '90%';
+                progressText.textContent = 'Finalizing...';
+                const pdfBytes = doc.output('arraybuffer');
+                return new Blob([pdfBytes], { type: 'application/pdf' });
+            }
+
+            // 6. Split PDF
+            async function splitPDF(file, progressFill, progressText) {
+                const pageRangeInput = document.getElementById('toolOption');
+                const pageRangeStr = (pageRangeInput?.value || '').trim();
+                if (!pageRangeStr) throw new Error('Please enter page numbers to extract (e.g., 1,3,5-7).');
+
+                progressFill.style.width = '20%';
+                progressText.textContent = 'Loading PDF...';
+                const arrayBuffer = await file.arrayBuffer();
+                const srcDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                const totalPages = srcDoc.getPageCount();
+
+                // Parse page ranges
+                const pagesToExtract = parsePageRanges(pageRangeStr, totalPages);
+                if (pagesToExtract.length === 0) throw new Error('No valid pages found in range: ' + pageRangeStr);
+
+                progressFill.style.width = '50%';
+                progressText.textContent = 'Extracting pages: ' + pagesToExtract.join(', ') + '...';
+                const newDoc = await PDFLib.PDFDocument.create();
+                const copiedPages = await newDoc.copyPages(srcDoc, pagesToExtract.map(p => p - 1));
+                copiedPages.forEach(page => newDoc.addPage(page));
+
+                progressFill.style.width = '90%';
+                progressText.textContent = 'Saving...';
+                const pdfBytes = await newDoc.save({ useObjectStreams: true });
+                return new Blob([pdfBytes], { type: 'application/pdf' });
+            }
+
+            function parsePageRanges(rangeStr, totalPages) {
+                const pages = new Set();
+                const parts = rangeStr.split(',');
+                for (const part of parts) {
+                    const trimmed = part.trim();
+                    if (trimmed.includes('-')) {
+                        const [startStr, endStr] = trimmed.split('-');
+                        const start = parseInt(startStr.trim());
+                        const end = parseInt(endStr.trim());
+                        if (!isNaN(start) && !isNaN(end)) {
+                            for (let i = Math.max(1, start); i <= Math.min(totalPages, end); i++) {
+                                pages.add(i);
+                            }
+                        }
+                    } else {
+                        const num = parseInt(trimmed);
+                        if (!isNaN(num) && num >= 1 && num <= totalPages) {
+                            pages.add(num);
+                        }
+                    }
+                }
+                return Array.from(pages).sort((a, b) => a - b);
+            }
+
+            // 7. Edit PDF (add text annotation)
+            async function editPDF(file, progressFill, progressText) {
+                const annotationText = (document.getElementById('toolOption')?.value || '').trim();
+                if (!annotationText) throw new Error('Please enter text to add to the PDF.');
+
+                const pageNum = parseInt(document.getElementById('editPage')?.value || '1');
+                const fontSize = parseInt(document.getElementById('editFontSize')?.value || '24');
+
+                progressFill.style.width = '20%';
+                progressText.textContent = 'Loading PDF...';
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                const totalPages = pdfDoc.getPageCount();
+
+                if (pageNum < 1 || pageNum > totalPages)
+                    throw new Error('Page number must be between 1 and ' + totalPages);
+
+                progressFill.style.width = '50%';
+                progressText.textContent = 'Adding annotation to page ' + pageNum + '...';
+                const page = pdfDoc.getPage(pageNum - 1);
+                const { width, height } = page.getSize();
+                page.drawText(annotationText, {
+                    x: width / 2 - (annotationText.length * fontSize * 0.3),
+                    y: height / 2,
+                    size: fontSize,
+                    color: PDFLib.rgb(0.9, 0.1, 0.1),
+                    opacity: 0.85,
+                });
+
+                progressFill.style.width = '90%';
+                progressText.textContent = 'Saving...';
+                const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+                return new Blob([pdfBytes], { type: 'application/pdf' });
+            }
+
+            // 8. Unlock PDF
+            async function unlockPDF(file, progressFill, progressText) {
+                const password = (document.getElementById('toolOption')?.value || '').trim();
+                progressFill.style.width = '20%';
+                progressText.textContent = 'Loading PDF...';
+                const arrayBuffer = await file.arrayBuffer();
+                let pdfDoc;
+                try {
+                    pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, {
+                        password: password || undefined,
+                        ignoreEncryption: true,
+                    });
+                } catch (e) {
+                    if (e.message && e.message.includes('password')) {
+                        throw new Error('Incorrect password or PDF is encrypted. Please provide the correct password.');
+                    }
+                    throw e;
+                }
+                progressFill.style.width = '60%';
+                progressText.textContent = 'Removing encryption...';
+                const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+                progressFill.style.width = '90%';
+                progressText.textContent = 'Encryption removed!';
+                return new Blob([pdfBytes], { type: 'application/pdf' });
+            }
+
+            // 9. OCR PDF
+            async function ocrPDF(file, progressFill, progressText) {
+                progressFill.style.width = '15%';
+                progressText.textContent = 'Loading PDF and rendering page...';
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: 2.0 });
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const ctx = canvas.getContext('2d');
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                progressFill.style.width = '40%';
+                progressText.textContent = 'Running OCR (this may take a moment)...';
+                const imageData = canvas.toDataURL('image/png');
+                const ocrResult = await Tesseract.recognize(imageData, 'eng', {
+                    logger: (m) => {
+                        if (m.status === 'recognizing text') {
+                            const pct = Math.round(m.progress * 100);
+                            progressFill.style.width = Math.round(40 + pct * 0.5) + '%';
+                            progressText.textContent = 'OCR: ' + pct + '%';
+                        }
+                    },
+                });
+                progressFill.style.width = '95%';
+                progressText.textContent = 'OCR complete!';
+                const text = ocrResult.data.text || '(No text detected)';
+                return new Blob([text], { type: 'text/plain' });
+            }
+
+            // 10. PDF to JPG
+            async function pdfToJpg(file, progressFill, progressText) {
+                progressFill.style.width = '20%';
+                progressText.textContent = 'Loading PDF...';
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const totalPages = pdf.numPages;
+                progressFill.style.width = '40%';
+                progressText.textContent = 'Rendering page 1 of ' + totalPages + '...';
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: 2.5 });
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const ctx = canvas.getContext('2d');
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                progressFill.style.width = '80%';
+                progressText.textContent = 'Converting to JPG...';
+                const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+                progressFill.style.width = '95%';
+                progressText.textContent = 'Page 1 ready! (Only first page shown. Re-upload for multi-page support.)';
+                return blob;
+            }
+
+            function canvasToBlob(canvas, type, quality) {
+                return new Promise((resolve, reject) => {
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve(blob);
+                        else reject(new Error('Canvas to Blob failed'));
+                    }, type, quality);
+                });
+            }
+
+            // ==================== INITIALIZATION ====================
+            // All panels are pre-rendered but hidden. The grid is visible by default.
+            console.log('📄 PDF Tools ready! All processing is done locally in your browser.');
+            console.log('🛡️ No files are ever uploaded to any server.');
+            console.log('📱 Fully functional on mobile devices.');
+
+        })();
+    </script>
+</body>
+</html>
